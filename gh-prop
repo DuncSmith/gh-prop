@@ -2,32 +2,54 @@
 set -e
 
 usage() {
-  echo "Usage: gh prop list [<owner/repo>]"
-  echo "       gh prop set property_name value"
-  echo "       gh prop schema [<owner>]"
-  echo ""
-  echo "Examples:"
-  echo "  gh prop list"
-  echo "  gh prop list octocat/hello-world"
-  echo "  gh prop set Team \"Dev Platform\""
-  echo "  gh prop schema"
-  echo "  gh prop schema octocat"
-  exit 1
+  cat <<EOF
+Usage: gh prop <command> [options]
+
+Manage repository custom properties
+
+Commands:
+  list        List properties for a repository
+  set         Set a property for a repository
+  schema      Get the schema for an organization
+
+Options:
+  -r <owner/repo>   Specify the owner and repository name
+  -p <property>     The name of the property
+  -v <value>        The value of the property
+
+Examples:
+  gh prop list
+  gh prop list -r octocat/hello-world
+  gh prop set -r octocat/hello-world -p Team -v "Team A"
+  gh prop schema
+  gh prop schema octocat
+}
+EOF
 }
 
 set() {
   local repo='{owner}/{repo}'
   local prop
   local value
-  if [ $# -gt 0 ]; then
-    prop="$1"
-    value="$2"
-  else
+  if [ $# -eq 0 ]; then
     usage
     return 1
   fi
 
-  echo "setting a property $prop to $value"
+  while getopts "r:p:v:" opt; do
+    case $opt in
+      r) repo="$OPTARG" ;;
+      p) prop="$OPTARG" ;;
+      v) value="$OPTARG" ;;
+      *) usage ;;
+    esac
+  done
+
+  if [ -z "$prop" ] || [ -z "$value" ]; then
+    echo "error: missing required option" >&2
+    usage
+    return 1
+  fi
 
   gh api \
     --method PATCH \
@@ -39,7 +61,18 @@ set() {
 
 list() {
   local repo='{owner}/{repo}'
-  [ $# -eq 0 ] || repo="$1"
+
+  while getopts "r:" opt; do
+    case $opt in
+      r) repo="$OPTARG" ;;
+      *) usage ;;
+    esac
+  done
+
+  if [ -z "$repo" ]; then
+    usage
+    return 1
+  fi
 
   gh api \
     -H "Accept: application/vnd.github+json" \
