@@ -1,3 +1,21 @@
+gh-prop
+---
+
+Manage repository custom properties
+
+Requirements:
+
+Your GitHub token will need to have the appropriate scopes to manage repository custom properties.
+You will need following scopes:
+- `repo`
+- `read:org`
+
+See the API docs for more information
+
+- https://docs.github.com/en/rest/repos/custom-properties?apiVersion=2022-11-28
+- https://docs.github.com/en/rest/orgs/custom-properties?apiVersion=2022-11-28
+
+
 ````
 Usage: gh prop <command> [options]
 
