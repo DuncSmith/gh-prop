@@ -1,3 +1,4 @@
+````
 Usage: gh prop <command> [options]
 
 Manage repository custom properties
@@ -18,3 +19,4 @@ Examples:
   gh prop set -r octocat/hello-world -p Team -v "Team A"
   gh prop schema
   gh prop schema octocat
+````
