@@ -1,35 +1,80 @@
 #!/usr/bin/env bash
 set -e
 
-echo "Hello gh-prop!"
+usage() {
+  echo "Usage: gh prop list [<owner/repo>]"
+  echo "       gh prop set property_name value"
+  echo "       gh prop schema [<owner>]"
+  echo ""
+  echo "Examples:"
+  echo "  gh prop list"
+  echo "  gh prop list octocat/hello-world"
+  echo "  gh prop set Team \"Dev Platform\""
+  echo "  gh prop schema"
+  echo "  gh prop schema octocat"
+  exit 1
+}
 
-# Snippets to help get started:
+set() {
+  local repo='{owner}/{repo}'
+  local prop
+  local value
+  if [ $# -gt 0 ]; then
+    prop="$1"
+    value="$2"
+  else
+    usage
+    return 1
+  fi
 
-# Determine if an executable is in the PATH
-# if ! type -p ruby >/dev/null; then
-#   echo "Ruby not found on the system" >&2
-#   exit 1
-# fi
+  echo "setting a property $prop to $value"
 
-# Pass arguments through to another command
-# gh issue list "$@" -R cli/cli
+  gh api \
+    --method PATCH \
+    -H "Accept: application/vnd.github+json" \
+    -H "X-GitHub-Api-Version: 2022-11-28" \
+    /repos/"$repo"/properties/values \
+    -f "properties[][property_name]=$prop" -f "properties[][value]=$value"
+}
 
-# Using the gh api command to retrieve and format information
-# QUERY='
-#   query($endCursor: String) {
-#     viewer {
-#       repositories(first: 100, after: $endCursor) {
-#         nodes {
-#           nameWithOwner
-#           stargazerCount
-#         }
-#       }
-#     }
-#   }
-# '
-# TEMPLATE='
-#   {{- range $repo := .data.viewer.repositories.nodes -}}
-#     {{- printf "name: %s - stargazers: %v\n" $repo.nameWithOwner $repo.stargazerCount -}}
-#   {{- end -}}
-# '
-# exec gh api graphql -f query="${QUERY}" --paginate --template="${TEMPLATE}"
+list() {
+  local repo='{owner}/{repo}'
+  [ $# -eq 0 ] || repo="$1"
+
+  gh api \
+    -H "Accept: application/vnd.github+json" \
+    -H "X-GitHub-Api-Version: 2022-11-28" \
+    /repos/"$repo"/properties/values
+}
+
+schema() {
+  local owner='{owner}'
+  [ $# -eq 0 ] || owner="$1"
+
+  gh api \
+  -H "Accept: application/vnd.github+json" \
+  -H "X-GitHub-Api-Version: 2022-11-28" \
+  /orgs/"$owner"/properties/schema
+}
+
+cmd="$1"
+[ $# -eq 0 ] || shift 1
+
+case "$cmd" in
+-h|--help)
+  usage
+  ;;
+set)
+  set "$@"
+  ;;
+list)
+  list "$@"
+  ;;
+schema)
+  schema "$@"
+  ;;
+*)
+  usage >&2
+  exit 1
+  ;;
+esac
