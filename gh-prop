@@ -27,7 +27,7 @@ Examples:
 EOF
 }
 
-set() {
+set_property() {
   local repo='{owner}/{repo}'
   local prop
   local value
@@ -98,7 +98,7 @@ case "$cmd" in
   usage
   ;;
 set)
-  set "$@"
+  set_property "$@"
   ;;
 list)
   list "$@"
