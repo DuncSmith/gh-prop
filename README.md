@@ -10,6 +10,8 @@ You will need following scopes:
 - `repo`
 - `read:org`
 
+In order to set a property you will need to have owner permissions on the repository.
+
 See the API docs for more information
 
 - https://docs.github.com/en/rest/repos/custom-properties?apiVersion=2022-11-28
