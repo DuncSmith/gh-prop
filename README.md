@@ -1,16 +1,16 @@
 gh-prop
 ---
 
-Manage repository custom properties
+Manage repository [custom properties](https://docs.github.com/en/organizations/managing-organization-settings/managing-custom-properties-for-repositories-in-your-organization)
 
 Requirements:
 
 Your GitHub token will need to have the appropriate scopes to manage repository custom properties.
-You will need following scopes:
+You will need following scopes to read properties and the schema:
 - `repo`
 - `read:org`
 
-In order to set a property you will need to have owner permissions on the repository.
+And to set properties, you will need to be an org owner or have the `repository_custom_properties:write`
 
 See the API docs for more information
 
