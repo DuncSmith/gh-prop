@@ -2,6 +2,8 @@
 set -e
 
 usage() {
+  exit_code="${1:-0}" # Use the passed in param as exit code or default to '0'
+
   cat <<EOF
 Usage: gh prop <command> [options]
 
@@ -29,6 +31,7 @@ Examples:
   gh prop search -r octocat/hello-world -p "Team" -v "Team A"
 }
 EOF
+exit "$exit_code"
 }
 
 set_property() {
@@ -36,23 +39,21 @@ set_property() {
   local prop
   local value
   if [ $# -eq 0 ]; then
-    usage
-    return 1
+    usage 1
   fi
 
   while getopts "r:p:v:" opt; do
     case $opt in
-      r) repo="$OPTARG" ;;
-      p) prop="$OPTARG" ;;
-      v) value="$OPTARG" ;;
-      *) usage ;;
+      r) repo="$OPTARG";;
+      p) prop="$OPTARG";;
+      v) value="$OPTARG";;
+      *) usage 1;;
     esac
   done
 
   if [ -z "$prop" ] || [ -z "$value" ]; then
     echo "error: missing required option" >&2
-    usage
-    return 1
+    usage 1
   fi
 
   gh api \
@@ -68,14 +69,13 @@ list() {
 
   while getopts "r:" opt; do
     case $opt in
-      r) repo="$OPTARG" ;;
-      *) usage ;;
+      r) repo="$OPTARG";;
+      *) usage 1;;
     esac
   done
 
   if [ -z "$repo" ]; then
-    usage
-    return 1
+    usage 1
   fi
 
   gh api \
@@ -99,7 +99,7 @@ search() {
   local prop
   local value
   if [ $# -eq 0 ]; then
-    usage && exit 1
+    usage 1
   fi
 
   while getopts "r:p:v:" opt; do
@@ -107,13 +107,13 @@ search() {
       r) repo="$OPTARG";;
       p) prop="$OPTARG";;
       v) value="$OPTARG";;
-      *) usage && exit 1;;
+      *) usage 1;;
     esac
   done
 
   if [ -z "$value" ]; then
     echo "error: missing required option" >&2
-    usage && exit 1
+    usage 1
   fi
 
   repo_props="$(gh prop list -r "${repo}")"
@@ -148,8 +148,10 @@ list)
 schema)
   schema "$@"
   ;;
+search)
+  search "$@"
+  ;;
 *)
-  usage >&2
-  exit 1
+  usage 1 >&2
   ;;
 esac
