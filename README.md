@@ -27,6 +27,7 @@ Commands:
   list        List properties for a repository
   set         Set a property for a repository
   schema      Get the schema for an organization
+  search      Search for a matching property value in a repository
 
 Options:
   -r <owner/repo>   Specify the owner and repository name
@@ -39,4 +40,7 @@ Examples:
   gh prop set -r octocat/hello-world -p Team -v "Team A"
   gh prop schema
   gh prop schema octocat
+  gh prop search -v "Any value"
+  gh prop search -p "Team" -v "Team A"
+  gh prop search -r octocat/hello-world -p "Team" -v "Team A"
 ````

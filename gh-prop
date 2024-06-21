@@ -2,6 +2,8 @@
 set -e
 
 usage() {
+  exit_code="${1:-0}" # Use the passed in param as exit code or default to '0'
+
   cat <<EOF
 Usage: gh prop <command> [options]
 
@@ -11,6 +13,7 @@ Commands:
   list        List properties for a repository
   set         Set a property for a repository
   schema      Get the schema for an organization
+  search      Search for a matching property value in a repository
 
 Options:
   -r <owner/repo>   Specify the owner and repository name
@@ -23,8 +26,12 @@ Examples:
   gh prop set -r octocat/hello-world -p Team -v "Team A"
   gh prop schema
   gh prop schema octocat
+  gh prop search -v "Any value"
+  gh prop search -p "Team" -v "Team A"
+  gh prop search -r octocat/hello-world -p "Team" -v "Team A"
 }
 EOF
+exit "$exit_code"
 }
 
 set_property() {
@@ -32,23 +39,21 @@ set_property() {
   local prop
   local value
   if [ $# -eq 0 ]; then
-    usage
-    return 1
+    usage 1
   fi
 
   while getopts "r:p:v:" opt; do
     case $opt in
-      r) repo="$OPTARG" ;;
-      p) prop="$OPTARG" ;;
-      v) value="$OPTARG" ;;
-      *) usage ;;
+      r) repo="$OPTARG";;
+      p) prop="$OPTARG";;
+      v) value="$OPTARG";;
+      *) usage 1;;
     esac
   done
 
   if [ -z "$prop" ] || [ -z "$value" ]; then
     echo "error: missing required option" >&2
-    usage
-    return 1
+    usage 1
   fi
 
   gh api \
@@ -64,14 +69,13 @@ list() {
 
   while getopts "r:" opt; do
     case $opt in
-      r) repo="$OPTARG" ;;
-      *) usage ;;
+      r) repo="$OPTARG";;
+      *) usage 1;;
     esac
   done
 
   if [ -z "$repo" ]; then
-    usage
-    return 1
+    usage 1
   fi
 
   gh api \
@@ -90,6 +94,44 @@ schema() {
   /orgs/"$owner"/properties/schema
 }
 
+search() {
+  local repo='{owner}/{repo}'
+  local prop
+  local value
+  if [ $# -eq 0 ]; then
+    usage 1
+  fi
+
+  while getopts "r:p:v:" opt; do
+    case $opt in
+      r) repo="$OPTARG";;
+      p) prop="$OPTARG";;
+      v) value="$OPTARG";;
+      *) usage 1;;
+    esac
+  done
+
+  if [ -z "$value" ]; then
+    echo "error: missing required option" >&2
+    usage 1
+  fi
+
+  repo_props="$(gh prop list -r "${repo}")"
+
+  if [ -z "$prop" ]; then
+    result="$(echo "$repo_props" | jq ".[] | .value == \"${value}\"")"
+  else
+    result="$(echo "$repo_props" | jq ".[] | select(.property_name == \"${prop}\") | .value == \"${value}\"")"
+  fi
+
+  if [[ "$result" =~ "true" ]]; then
+    echo "✅ Found a match: '${repo}'"
+  else
+    echo "❌ No match: '${repo}'"
+    exit 1
+  fi
+}
+
 cmd="$1"
 [ $# -eq 0 ] || shift 1
 
@@ -106,8 +148,10 @@ list)
 schema)
   schema "$@"
   ;;
+search)
+  search "$@"
+  ;;
 *)
-  usage >&2
-  exit 1
+  usage 1 >&2
   ;;
 esac
